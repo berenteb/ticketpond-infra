@@ -13,7 +13,13 @@ variable "namespace" {
 variable "microservices" {
   description = "List of microservices"
   type        = list(string)
-  default     = ["gateway", "ticket", "experience", "merchant", "customer", "order", "notification", "cart", "pass", "payment"]
+  default     = ["authentication", "ticket", "experience", "merchant", "customer", "order", "notification", "cart", "payment"]
+}
+
+variable "storage_microservices" {
+  description = "List of storage microservices"
+  type        = list(string)
+  default     = ["pass", "asset"]
 }
 
 variable "kafka_chart_version" {
@@ -63,6 +69,12 @@ variable "frontend_url" {
   description = "Frontend URL"
   type        = string
   default     = "http://localhost:3000"
+}
+
+variable "backend_url" {
+  description = "Backend URL"
+  type        = string
+  default     = "http://localhost"
 }
 
 variable "jwt_secret" {
