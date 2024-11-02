@@ -175,6 +175,26 @@ resource "kubernetes_deployment" "microservices" {
 
           image_pull_policy = "Never"
 
+          liveness_probe {
+            http_get {
+              path = "/${each.value}/health"
+              port = kubernetes_config_map.ticketpond_config.data.PORT
+            }
+            initial_delay_seconds = 30
+            period_seconds = 10
+          }
+
+          resources {
+            limits = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
+            requests = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
+          }
+
           env_from {
             config_map_ref {
               name = kubernetes_config_map.ticketpond_config.metadata[0].name
@@ -231,6 +251,26 @@ resource "kubernetes_deployment" "storage_microservices" {
           image = "ticketpond-${each.value}:latest"
 
           image_pull_policy = "Never"
+
+          liveness_probe {
+            http_get {
+              path = "/${each.value}/health"
+              port = kubernetes_config_map.ticketpond_config.data.PORT
+            }
+            initial_delay_seconds = 30
+            period_seconds = 10
+          }
+
+          resources {
+            limits = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
+            requests = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
+          }
 
           volume_mount {
             mount_path = "/static"
@@ -362,4 +402,26 @@ resource "kubernetes_ingress_v1" "ingress_storage_microservices" {
       }
     }
   }
+}
+
+resource "kubernetes_horizontal_pod_autoscaler" "microservices_hpa" {
+    for_each = kubernetes_deployment.microservices
+
+    metadata {
+        name      = "${each.value.metadata[0].name}-hpa"
+        namespace = var.namespace
+    }
+
+    spec {
+        max_replicas = 5
+        min_replicas = 1
+
+        scale_target_ref {
+          api_version = "apps/v1"
+          name  = each.value.metadata[0].name
+          kind  = "Deployment"
+        }
+
+      target_cpu_utilization_percentage = 50
+    }
 }
